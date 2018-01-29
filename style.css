@@ -1,0 +1,28 @@
+body {
+	text-align: center;
+	font: 1.2em "Fira Sans", sans-serif;
+	background-color: #000;
+	color: #FFF;
+}
+
+#timer{
+	font-size: 1500%;
+	font-weight: bold;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+button {
+	font-size: 150%;
+	margin: 10px;
+	-webkit-border-radius: 15;
+  -moz-border-radius: 15;
+  border-radius: 15px;
+	padding: 15px;
+	background-color: #FFF;
+	color: #000;
+}
+
+button:disabled {
+	background-color: #999;
+}
