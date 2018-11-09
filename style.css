@@ -16,3 +16,31 @@ body {
 .fwb {
 	font-weight: bold;
 }
+
+@-webkit-keyframes red-blue {
+	0%   { background-color: #f00; }
+	49% { background-color: #f00; }
+	50% { background-color: #00f; }
+	99% { background-color: #00f; }
+	100% { background-color: #f00; }
+}
+@-moz-keyframes red-blue {
+	0%   { background-color: #f00; }
+	49% { background-color: #f00; }
+	50% { background-color: #00f; }
+	99% { background-color: #00f; }
+	100% { background-color: #f00; }
+}
+@keyframes red-blue {
+	0%   { background-color: #f00; }
+	49% { background-color: #f00; }
+	50% { background-color: #00f; }
+	99% { background-color: #00f; }
+	100% { background-color: #f00; }
+}
+
+.flashing {
+	-webkit-animation: red-blue 1s infinite;
+	-moz-animation:    red-blue 1s infinite;
+	animation:         red-blue 1s infinite;
+}

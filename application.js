@@ -24,24 +24,26 @@ const magicMaze = {
       } else {
         $('body').removeClass('red').addClass('green')
       }
-      if (magicMaze.duration === 0) {
+
+      if (magicMaze.duration > 0) {
+        magicMaze.duration -= 1
+        $('#timer').html(((magicMaze.duration - (magicMaze.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (magicMaze.duration % 60).toString().padStart(2, '0'))
+      } else {
+        $('body').removeClass('red').addClass('flashing')
         $('#flip').prop('disabled', true)
         clearInterval(magicMaze.currentTimer)
-      } else {
-        magicMaze.duration--
-        $('#timer').html(((magicMaze.duration - (magicMaze.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (magicMaze.duration % 60).toString().padStart(2, '0'))
       }
     }, 1000)
   },
 
   flipTimer() {
     magicMaze.timer({
-      'duration': magicMaze.interval - magicMaze.duration
+      duration: magicMaze.interval - magicMaze.duration
     })
   },
 
   resetTimer() {
-    $('body').removeClass().addClass('green')
+    $('body').removeClass('red flashing').addClass('green')
     $('#flip').prop('disabled', true)
     $('#start').prop('disabled', false)
     clearInterval(magicMaze.currentTimer)
