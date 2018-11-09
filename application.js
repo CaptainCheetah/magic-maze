@@ -52,7 +52,9 @@ const magicMaze = {
   },
 
   flipTimer() {
-    magicMaze.timer({'duration': (magicMaze.interval - magicMaze.duration)})
+    magicMaze.timer({
+      'duration': magicMaze.interval - magicMaze.duration
+    })
   },
 
   resetTimer() {
