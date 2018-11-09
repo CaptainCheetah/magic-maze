@@ -1,6 +1,4 @@
 body {
-	text-align: center;
-	font: 1.2em "Fira Sans", sans-serif;
 	-webkit-transition: all 0.5s ease;
     	-moz-transition: all 0.5s ease;
     	-o-transition: all 0.5s ease;
@@ -9,14 +7,6 @@ body {
 
 .green {
 	background-color: #2fc864;
-}
-
-.yellow {
-	background-color: #e4ea00;
-}
-
-.orange {
-	background-color: #f08a27;
 }
 
 .red{

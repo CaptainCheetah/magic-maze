@@ -3,28 +3,7 @@ const magicMaze = {
   interval: 180,
   duration: 180,
 
-  setColorStatus(time) {
-    const timeLeft = (
-      (typeof time === 'number')
-        ? time
-        : 180
-    )
-    let newClass
-
-    if (timeLeft > 60) {
-      newClass = 'green'
-    } else if (timeLeft > 30) {
-      newClass = 'yellow'
-    } else if (timeLeft > 10) {
-      newClass = 'orange'
-    } else {
-      newClass = 'red'
-    }
-    $('body').removeClass().addClass(newClass)
-  },
-
   timer(params) {
-    $('#timer').css('color', '#000')
     $('#flip').prop('disabled', false)
     $('#start').prop('disabled', true)
 
@@ -40,7 +19,11 @@ const magicMaze = {
     }
 
     magicMaze.currentTimer = setInterval(function () {
-      magicMaze.setColorStatus(magicMaze.duration)
+      if (magicMaze.duration < 30) {
+        $('body').removeClass('green').addClass('red')
+      } else {
+        $('body').removeClass('red').addClass('green')
+      }
       if (magicMaze.duration === 0) {
         $('#flip').prop('disabled', true)
         clearInterval(magicMaze.currentTimer)
@@ -59,7 +42,6 @@ const magicMaze = {
 
   resetTimer() {
     $('body').removeClass().addClass('green')
-    $('#timer').css('color', '#000')
     $('#flip').prop('disabled', true)
     $('#start').prop('disabled', false)
     clearInterval(magicMaze.currentTimer)
