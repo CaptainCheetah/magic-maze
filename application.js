@@ -66,3 +66,11 @@ const magicMaze = {
     $('#timer').html(((magicMaze.duration - (magicMaze.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (magicMaze.duration % 60).toString().padStart(2, '0'))
   }
 }
+
+$(document).ready(function () {
+  $(document).keypress(function (e) {
+    if (e.which === 13) {
+      magicMaze.flipTimer()
+    }
+  })
+})
