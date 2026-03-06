@@ -15,9 +15,46 @@ MAGICMAZE.SPEECH.talk = function(params){
 	window.speechSynthesis.speak(msg);
 }
 
+// Timer state variables
 MAGICMAZE.currentTimer = null;
 MAGICMAZE.interval = 180;
 MAGICMAZE.duration = 180;
+MAGICMAZE.startTime = null;
+MAGICMAZE.lastFlipTime = null;
+MAGICMAZE.targetDuration = 180;
+MAGICMAZE.timerEnded = false;
+MAGICMAZE.lastAnnounced = null;
+
+// Pre-compute formatted time strings for performance
+MAGICMAZE.timeStrings = [];
+MAGICMAZE.initTimeCache = function(maxSeconds) {
+	MAGICMAZE.timeStrings = new Array(maxSeconds + 1);
+	for (var i = 0; i <= maxSeconds; i++) {
+		var mins = Math.floor(i / 60);
+		var secs = i % 60;
+		MAGICMAZE.timeStrings[i] =
+			String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+	}
+};
+
+// Helper function to format time for announcements
+MAGICMAZE.formatTimeAnnouncement = function(seconds) {
+	var mins = Math.floor(seconds / 60);
+	var secs = seconds % 60;
+	var announcement = '';
+	
+	if (mins > 0) {
+		announcement += mins + (mins === 1 ? ' minute' : ' minutes');
+	}
+	if (mins > 0 && secs > 0) {
+		announcement += ' and ';
+	}
+	if (secs > 0) {
+		announcement += secs + (secs === 1 ? ' second' : ' seconds');
+	}
+	
+	return announcement;
+};
 
 MAGICMAZE.setColorStatus = function(t){
 	var timeLeft = ((typeof t == 'number') ? t : 180);
@@ -42,42 +79,87 @@ MAGICMAZE.timer = function(params){
 		$('#flip').prop('disabled',false);
 		$('#start').prop('disabled',true);
 
-		MAGICMAZE.duration = ((typeof params != 'undefined' && typeof params.duration != 'undefined') ? params.duration : MAGICMAZE.interval);
-		$('#timer').html(((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (MAGICMAZE.duration % 60).toString().padStart(2, '0'));
-
-		MAGICMAZE.SPEECH.talk({'s':
-			(((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60) ? ((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60) + ' minutes': '' ) +
-			(( (MAGICMAZE.duration % 60) && ((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60) ) ? ' and'  : '')+
-			((MAGICMAZE.duration % 60) ? (MAGICMAZE.duration % 60) + ' seconds' : '' ) +
-			' remaining'
-		});
+		// Initialize delta-based timing
+		var duration = ((typeof params != 'undefined' && typeof params.duration != 'undefined') ? params.duration : MAGICMAZE.interval);
+		MAGICMAZE.startTime = Date.now();
+		MAGICMAZE.lastFlipTime = MAGICMAZE.startTime;
+		MAGICMAZE.targetDuration = duration;
+		MAGICMAZE.timerEnded = false;
+		MAGICMAZE.lastAnnounced = null;
 		
+		// Clear any existing timer
 		if (MAGICMAZE.currentTimer){
 			clearInterval(MAGICMAZE.currentTimer);
 			MAGICMAZE.SPEECH.talk({'s': 'Pass all action tiles to the left.'});
 		}
 
-		MAGICMAZE.currentTimer = setInterval(function() {
-			MAGICMAZE.setColorStatus(MAGICMAZE.duration);
-			if (MAGICMAZE.duration == 0) {
+		// Initial display update
+		MAGICMAZE.duration = duration;
+		$('#timer').html(MAGICMAZE.timeStrings[duration]);
+
+		// Initial announcement
+		MAGICMAZE.SPEECH.talk({'s': MAGICMAZE.formatTimeAnnouncement(duration) + ' remaining'});
+
+		// Update function using delta-based timing
+		var updateTimer = function() {
+			var now = Date.now();
+			var elapsed = Math.floor((now - MAGICMAZE.lastFlipTime) / 1000);
+			var remaining = Math.max(0, MAGICMAZE.targetDuration - elapsed);
+			
+			MAGICMAZE.duration = remaining;
+			
+			// Update display
+			$('#timer').html(MAGICMAZE.timeStrings[remaining]);
+			MAGICMAZE.setColorStatus(remaining);
+			
+			// Voice announcements at specific intervals
+			if ([30, 20, 10, 5].indexOf(remaining) > -1 && remaining !== MAGICMAZE.lastAnnounced) {
 				window.speechSynthesis.cancel();
-				$('#flip').prop('disabled',true);
-				clearInterval(MAGICMAZE.currentTimer);
-				// $('#timer').css('color','#F00');
-				MAGICMAZE.SPEECH.talk({'s': 'Game over'});
-			} else {
-				MAGICMAZE.duration--;
-				$('#timer').html(((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (MAGICMAZE.duration % 60).toString().padStart(2, '0'));
-				if ([30,20,10,5].indexOf(MAGICMAZE.duration) > -1){
-					window.speechSynthesis.cancel();
-					MAGICMAZE.SPEECH.talk({'s': MAGICMAZE.duration + ' seconds remaining'});
-				}
+				MAGICMAZE.SPEECH.talk({'s': remaining + ' seconds remaining'});
+				MAGICMAZE.lastAnnounced = remaining;
 			}
-		}, 1000);
+			
+			// Timer end
+			if (remaining === 0 && !MAGICMAZE.timerEnded) {
+				MAGICMAZE.timerEnded = true;
+				clearInterval(MAGICMAZE.currentTimer);
+				window.speechSynthesis.cancel();
+				$('#flip').prop('disabled', true);
+				MAGICMAZE.SPEECH.talk({'s': 'Game over'});
+			}
+		};
+
+		// Start updates (100ms for smooth display, but accuracy from delta)
+		updateTimer();
+		MAGICMAZE.currentTimer = setInterval(updateTimer, 100);
 }
 
 MAGICMAZE.flipTimer = function(){
-	MAGICMAZE.timer({'duration' : (MAGICMAZE.interval - MAGICMAZE.duration)});
+	// Calculate current remaining time using delta
+	var now = Date.now();
+	var elapsed = Math.floor((now - MAGICMAZE.lastFlipTime) / 1000);
+	var currentRemaining = Math.max(0, MAGICMAZE.targetDuration - elapsed);
+	
+	// Invert time (flip the hourglass)
+	var newDuration = MAGICMAZE.targetDuration - currentRemaining;
+	
+	// Reset timing reference for new duration
+	MAGICMAZE.lastFlipTime = now;
+	MAGICMAZE.targetDuration = newDuration;
+	MAGICMAZE.lastAnnounced = null;
+	MAGICMAZE.timerEnded = false;
+	
+	// Update display immediately
+	MAGICMAZE.duration = newDuration;
+	$('#timer').html(MAGICMAZE.timeStrings[newDuration]);
+	MAGICMAZE.setColorStatus(newDuration);
+	
+	// Announce
+	window.speechSynthesis.cancel();
+	MAGICMAZE.SPEECH.talk({
+		's': 'Pass all action tiles to the left. ' +
+		     MAGICMAZE.formatTimeAnnouncement(newDuration) + ' remaining'
+	});
 }
 MAGICMAZE.resetTimer = function(){
 	window.speechSynthesis.cancel();
@@ -88,7 +170,12 @@ MAGICMAZE.resetTimer = function(){
 	clearInterval(MAGICMAZE.currentTimer);
 	MAGICMAZE.currentTimer = null;
 	MAGICMAZE.duration = MAGICMAZE.interval;
-	$('#timer').html(((MAGICMAZE.duration - (MAGICMAZE.duration % 60)) / 60).toString().padStart(2, '0') + ":" + (MAGICMAZE.duration % 60).toString().padStart(2, '0'));
+	MAGICMAZE.startTime = null;
+	MAGICMAZE.lastFlipTime = null;
+	MAGICMAZE.targetDuration = MAGICMAZE.interval;
+	MAGICMAZE.timerEnded = false;
+	MAGICMAZE.lastAnnounced = null;
+	$('#timer').html(MAGICMAZE.timeStrings[MAGICMAZE.interval]);
 }
 
 MAGICMAZE.initVoices = function(){
@@ -107,6 +194,13 @@ MAGICMAZE.initVoices = function(){
 }
 
 $(document).ready(function(){
+	// Initialize time cache for performance
+	MAGICMAZE.initTimeCache(300); // Support up to 5 minutes
+	
+	// Initialize display
+	$('#timer').html(MAGICMAZE.timeStrings[MAGICMAZE.interval]);
+	
+	// Initialize voices
 	MAGICMAZE.initVoices();
 	if (typeof window.speechSynthesis !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
   		window.speechSynthesis.onvoiceschanged = MAGICMAZE.initVoices;
@@ -114,6 +208,4 @@ $(document).ready(function(){
 	window.onbeforeunload = function(){
 		window.speechSynthesis.cancel();
 	}
-
-
 });
