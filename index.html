@@ -1,5 +1,8 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Magic Maze Timer</title>
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -7,13 +10,11 @@
 		<link rel="stylesheet" href="style.css" />
 	</head>
 	<body class="safe">
-		<button name="button" onclick="MAGICMAZE.timer({'duration':180});" id="start">START TIMER</button>
-		<button name="button" onclick="MAGICMAZE.resetTimer();">RESET TIMER</button>
+		<button type="button" onclick="MAGICMAZE.startTimer({duration: 180});" id="start">START TIMER</button>
+		<button type="button" onclick="MAGICMAZE.resetTimer();" id="reset">RESET TIMER</button>
 		<div id="timer">03:00</div>
-		<button name="button" onclick="MAGICMAZE.flipTimer();" id="flip" disabled>FLIP TIMER</button>
+		<button type="button" onclick="MAGICMAZE.flipTimer();" id="flip" disabled>FLIP TIMER</button>
 
-
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 		<script src="application.js"></script>
 	</body>
 </html>
